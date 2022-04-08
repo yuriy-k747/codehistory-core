@@ -30,7 +30,20 @@ public class CompileResult {
     this.newCriticalErrors = newCriticalErrors;
   }
 
-  public List<ModuleUnitMemberChange> findByIdentifier(String module, String unit) {
+  public List<ModuleUnitChange> findUnitChanges(String module, String unit) {
+    var res = moduleUnitChanges.stream().filter(moduleUnitMemberChange -> {
+      ModuleUnit moduleUnit = moduleUnitMemberChange.getModuleUnit();
+      if(!moduleUnit.getIdentifier().equals(unit)) {
+        return false;
+      }
+
+      return moduleUnit.getModule().getName().equals(module);
+    });
+
+    return res.collect(Collectors.toList());
+  }
+
+  public List<ModuleUnitMemberChange> findMemberChanges(String module, String unit) {
     Stream<ModuleUnitMemberChange> res = moduleUnitMemberChanges.stream().filter(moduleUnitMemberChange -> {
       ModuleUnit moduleUnit = moduleUnitMemberChange.getModuleUnitMember().getModuleUnit();
       if(!moduleUnit.getIdentifier().equals(unit)) {
@@ -43,8 +56,8 @@ public class CompileResult {
     return res.collect(Collectors.toList());
   }
 
-  public List<ModuleUnitMemberChange> findByIdentifier(String module, String unit, String member) {
-    List<ModuleUnitMemberChange> unitMembersChanged = findByIdentifier(module, unit);
+  public List<ModuleUnitMemberChange> findMemberChanges(String module, String unit, String member) {
+    List<ModuleUnitMemberChange> unitMembersChanged = findMemberChanges(module, unit);
 
     return unitMembersChanged.stream()
         .filter(moduleUnitMemberChange -> moduleUnitMemberChange.getModuleUnitMember().getIdentifier().equals(member))

@@ -43,8 +43,8 @@ public class SourceAddedIndexTests extends SourceIndexTestsBase {
 
     CompileResult result = results.get(0);
 
-    List<ModuleUnitMemberChange> changes1 = result.findByIdentifier("com.ch.tests", "TestClass", "foo");
-    List<ModuleUnitMemberChange> changes2 = result.findByIdentifier("com.ch.tests", "TestClass", "bar");
+    List<ModuleUnitMemberChange> changes1 = result.findMemberChanges("com.ch.tests", "TestClass", "foo");
+    List<ModuleUnitMemberChange> changes2 = result.findMemberChanges("com.ch.tests", "TestClass", "bar");
 
     Assertions.assertEquals(1, changes1.size());
     Assertions.assertEquals(1, changes2.size());
