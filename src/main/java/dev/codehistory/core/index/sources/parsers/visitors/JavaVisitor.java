@@ -18,9 +18,9 @@ import java.util.List;
 public class JavaVisitor extends JavaParserBaseVisitor<Object> {
   private final LocalSourceIndexData sourceIndexData;
   private Module currentModule;
-  private Deque<ModuleUnit> moduleUnits = new LinkedList<>();
-  private Deque<ParserRuleContext> sourcePieces = new LinkedList<>();
-  private DefinitionBuilder currentDefinition = new DefinitionBuilder();
+  private final Deque<ModuleUnit> moduleUnits = new LinkedList<>();
+  private final Deque<ParserRuleContext> sourcePieces = new LinkedList<>();
+  private final DefinitionBuilder currentDefinition = new DefinitionBuilder();
 
   public JavaVisitor(LocalSourceIndexData sourceIndexData) {
     this.sourceIndexData = sourceIndexData;

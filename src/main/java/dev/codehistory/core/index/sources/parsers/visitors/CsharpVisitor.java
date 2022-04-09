@@ -10,15 +10,16 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.apache.commons.codec.digest.DigestUtils;
 
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Stack;
 
 public class CsharpVisitor extends CSharpParserBaseVisitor<Object> {
   private final LocalSourceIndexData sourceIndexData;
   private Module currentModule;
-  private Stack<ModuleUnit> moduleUnits = new Stack<>();
-  private Stack<ParserRuleContext> sourcePieces = new Stack<>();
-  private DefinitionBuilder currentDefinition = new DefinitionBuilder();
+  private final Deque<ModuleUnit> moduleUnits = new LinkedList<>();
+  private final Deque<ParserRuleContext> sourcePieces = new LinkedList<>();
+  private final DefinitionBuilder currentDefinition = new DefinitionBuilder();
 
   public CsharpVisitor(LocalSourceIndexData sourceIndexData) {
     this.sourceIndexData = sourceIndexData;
@@ -177,12 +178,12 @@ public class CsharpVisitor extends CSharpParserBaseVisitor<Object> {
 
       currentDefinition.flush();
       sourcePieces.pop();
-      return true;
     } else {
       super.visitStruct_member_declaration(ctx);
       sourcePieces.pop();
-      return true;
     }
+
+    return true;
   }
 
   @Override
@@ -408,7 +409,7 @@ public class CsharpVisitor extends CSharpParserBaseVisitor<Object> {
 
     if (ctx.variable_declarators() != null
         && ctx.variable_declarators().variable_declarator() != null
-        && ctx.variable_declarators().variable_declarator().size() > 0) {
+        && ctx.variable_declarators().variable_declarator().isEmpty()) {
       for (CSharpParser.Variable_declaratorContext decl : ctx.variable_declarators().variable_declarator()) {
         DefinitionBuilder def = currentDefinition.copy();
         def.append(decl.ASSIGNMENT());
@@ -514,7 +515,7 @@ public class CsharpVisitor extends CSharpParserBaseVisitor<Object> {
       String definition,
       String distinguisher,
       Token definitionEnd) {
-    if (moduleUnits.empty()) {
+    if (moduleUnits.isEmpty()) {
       throw new IllegalStateException("currentModuleUnit is null");
     }
 
