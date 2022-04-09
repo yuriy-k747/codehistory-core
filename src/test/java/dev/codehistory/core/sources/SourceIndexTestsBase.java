@@ -2,7 +2,7 @@ package dev.codehistory.core.sources;
 
 import dev.codehistory.core.entities.sources.*;
 import dev.codehistory.core.index.sources.CompileResult;
-import org.junit.jupiter.api.Assertions;
+import org.junit.Assert;
 
 import java.util.List;
 
@@ -19,27 +19,27 @@ public class SourceIndexTestsBase {
     List<ModuleUnitChange> unitChanges = results.get(0).getModuleUnitChanges();
     ModuleUnitChange unitChange = unitChanges.get(0);
 
-    Assertions.assertEquals(unitChangeType, unitChange.getChangeType());
+    Assert.assertEquals(unitChangeType, unitChange.getChangeType());
     ModuleUnit moduleUnit = unitChange.getModuleUnit();
-    Assertions.assertEquals("class", moduleUnit.getKeyword());
-    Assertions.assertEquals("MyClass", moduleUnit.getIdentifier());
+    Assert.assertEquals("class", moduleUnit.getKeyword());
+    Assert.assertEquals("MyClass", moduleUnit.getIdentifier());
 
     ModuleUnitMemberChange memberChange = results.get(0).getModuleUnitMemberChanges().get(0);
-    Assertions.assertEquals(memberChangeType, memberChange.getChangeType());
+    Assert.assertEquals(memberChangeType, memberChange.getChangeType());
 
     ModuleUnitMember member = memberChange.getModuleUnitMember();
-    Assertions.assertEquals("method", member.getCategory());
-    Assertions.assertEquals("foo", member.getIdentifier());
+    Assert.assertEquals("method", member.getCategory());
+    Assert.assertEquals("foo", member.getIdentifier());
   }
 
   protected void assertResults(List<CompileResult> results, int size, int unitChangesSize, int memberChangesSize) {
-    Assertions.assertEquals(size, results.size());
+    Assert.assertEquals(size, results.size());
     CompileResult result = results.get(0);
 
     List<ModuleUnitChange> unitChanges = result.getModuleUnitChanges();
-    Assertions.assertEquals(unitChangesSize, unitChanges.size());
+    Assert.assertEquals(unitChangesSize, unitChanges.size());
 
     List<ModuleUnitMemberChange> memberChanges = result.getModuleUnitMemberChanges();
-    Assertions.assertEquals(memberChangesSize, memberChanges.size());
+    Assert.assertEquals(memberChangesSize, memberChanges.size());
   }
 }

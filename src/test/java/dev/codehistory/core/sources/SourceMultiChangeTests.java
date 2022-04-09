@@ -3,8 +3,8 @@ package dev.codehistory.core.sources;
 import dev.codehistory.core.entities.diff.*;
 import dev.codehistory.core.index.sources.ChangesCompiler;
 import dev.codehistory.core.index.sources.CompileResult;
+import org.junit.Assert;
 import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
 
 import java.util.List;
 
@@ -36,6 +36,6 @@ public class SourceMultiChangeTests extends SourceIndexTestsBase {
     ChangesCompiler compiler = new ChangesCompiler();
     List<CompileResult> results = compiler.compileDiff(pack);
 
-    Assertions.assertEquals(3, results.size());
+    Assert.assertEquals(3, results.size());
   }
 }

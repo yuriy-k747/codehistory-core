@@ -4,8 +4,8 @@ import dev.codehistory.core.entities.diff.*;
 import dev.codehistory.core.entities.sources.*;
 import dev.codehistory.core.index.sources.CompileResult;
 import dev.codehistory.core.index.sources.ChangesCompiler;
+import org.junit.Assert;
 import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
 
 import java.util.List;
 
@@ -46,13 +46,13 @@ public class SourceAddedIndexTests extends SourceIndexTestsBase {
     List<ModuleUnitMemberChange> changes1 = result.findMemberChanges("com.ch.tests", "TestClass", "foo");
     List<ModuleUnitMemberChange> changes2 = result.findMemberChanges("com.ch.tests", "TestClass", "bar");
 
-    Assertions.assertEquals(1, changes1.size());
-    Assertions.assertEquals(1, changes2.size());
+    Assert.assertEquals(1, changes1.size());
+    Assert.assertEquals(1, changes2.size());
 
-    Assertions.assertEquals(ModuleUnitMemberChangeType.ADDED, changes1.get(0).getChangeType());
-    Assertions.assertEquals(ModuleUnitMemberChangeType.ADDED, changes2.get(0).getChangeType());
+    Assert.assertEquals(ModuleUnitMemberChangeType.ADDED, changes1.get(0).getChangeType());
+    Assert.assertEquals(ModuleUnitMemberChangeType.ADDED, changes2.get(0).getChangeType());
 
-    Assertions.assertEquals("foo", changes1.get(0).getModuleUnitMember().getIdentifier());
-    Assertions.assertEquals("bar", changes2.get(0).getModuleUnitMember().getIdentifier());
+    Assert.assertEquals("foo", changes1.get(0).getModuleUnitMember().getIdentifier());
+    Assert.assertEquals("bar", changes2.get(0).getModuleUnitMember().getIdentifier());
   }
 }

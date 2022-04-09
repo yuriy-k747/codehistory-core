@@ -7,8 +7,8 @@ import dev.codehistory.core.entities.sources.SourcePart;
 import dev.codehistory.core.index.sources.SourceFileDiffCompiler;
 import dev.codehistory.core.index.sources.data.LocalSourceIndexData;
 import dev.codehistory.core.index.sources.parsers.Parser;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,13 +27,13 @@ public class CsharpParseTests extends SourceTestsBase {
 
     LocalSourceIndexData data = parser.getData();
 
-    Assertions.assertEquals(1, data.getModuleUnits().size());
+    Assert.assertEquals(1, data.getModuleUnits().size());
   
     Optional<ModuleUnit> unitOptional = data.getModuleUnits().keySet().stream().findFirst();
-    Assertions.assertTrue(unitOptional.isPresent());
+    Assert.assertTrue(unitOptional.isPresent());
     
     ModuleUnit moduleUnit = unitOptional.get();
-    Assertions.assertEquals("TestClass", moduleUnit.getIdentifier());
+    Assert.assertEquals("TestClass", moduleUnit.getIdentifier());
   }
 
   @Test
@@ -53,13 +53,13 @@ public class CsharpParseTests extends SourceTestsBase {
     LocalSourceIndexData newData = parserNew.getData();
     LocalSourceIndexData oldData = parserOld.getData();
 
-    Assertions.assertEquals(10, newData.getModuleUnitMembers().size());
-    Assertions.assertEquals(6, oldData.getModuleUnitMembers().size());
+    Assert.assertEquals(10, newData.getModuleUnitMembers().size());
+    Assert.assertEquals(6, oldData.getModuleUnitMembers().size());
 
     ModuleUnitMember clearAllNew = getModuleUnitMember(newData, "ClearAll()");
     ModuleUnitMember clearAllOld = getModuleUnitMember(oldData, "ClearAll()");
 
-    Assertions.assertEquals(clearAllNew.getSourceState().getSha1(), clearAllOld.getSourceState().getSha1());
+    Assert.assertEquals(clearAllNew.getSourceState().getSha1(), clearAllOld.getSourceState().getSha1());
   }
 
   @Test
@@ -75,8 +75,8 @@ public class CsharpParseTests extends SourceTestsBase {
     ModuleUnit propertyMethodType = getModuleUnit(data, "Renamer.PropertyMethodType");
     ModuleUnit mergeStateFlags = getModuleUnit(data, "Renamer.MergeStateFlags");
 
-    Assertions.assertEquals(3, propertyMethodType.getModuleUnitMembers().size());
-    Assertions.assertEquals(4, mergeStateFlags.getModuleUnitMembers().size());
+    Assert.assertEquals(3, propertyMethodType.getModuleUnitMembers().size());
+    Assert.assertEquals(4, mergeStateFlags.getModuleUnitMembers().size());
   }
   
   private ModuleUnitMember getModuleUnitMember(LocalSourceIndexData data, String identifier) {

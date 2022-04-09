@@ -3,7 +3,6 @@ package dev.codehistory.core.sources;
 import dev.codehistory.core.entities.diff.*;
 import dev.codehistory.core.entities.sources.ModuleUnitChange;
 import dev.codehistory.core.entities.sources.ModuleUnitChangeType;
-import dev.codehistory.core.entities.sources.ModuleUnitMemberChange;
 import dev.codehistory.core.index.sources.ChangesCompiler;
 import dev.codehistory.core.index.sources.CompileResult;
 import org.junit.Assert;
@@ -11,7 +10,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-public class FiindInCompileResultsTests {
+public class FindInCompileResultsTests {
 
   @Test
   public void unitChanged_functionAdded() {
