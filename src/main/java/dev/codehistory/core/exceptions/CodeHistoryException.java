@@ -1,11 +1,21 @@
 package dev.codehistory.core.exceptions;
 
-public class CodeHistoryException extends IllegalStateException {
-  public CodeHistoryException(String message) {
-    super(message);
+import org.eclipse.jgit.annotations.Nullable;
+
+public class CodeHistoryException extends RuntimeException {
+  public CodeHistoryException() {
+    super();
   }
 
-  public CodeHistoryException(String message, Throwable cause) {
-    super(message, cause);
+  public CodeHistoryException(String msg) {
+    super(msg);
+  }
+
+  public CodeHistoryException(String msg, @Nullable Throwable cause) {
+    super(msg, cause);
+  }
+
+  public CodeHistoryException(String msg, @Nullable Throwable cause, boolean withStackTrace) {
+    super(msg, cause, !withStackTrace, withStackTrace);
   }
 }
