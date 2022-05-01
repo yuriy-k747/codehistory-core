@@ -9,6 +9,7 @@ import dev.codehistory.core.index.sources.CompileResult;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Consumer;
 
 public class SourceIndexData extends LocalSourceIndexData {
   private final ConcurrentHashMap<ParseErrorFile, ParseErrorFile> parseErrorFiles = new ConcurrentHashMap<>();
@@ -134,8 +135,8 @@ public class SourceIndexData extends LocalSourceIndexData {
     addError(newFile, null);
   }
   
-  public void addChanges(List<CompileResult> compilationResults) {
-    CompilatorPostProcess.postProcess(compilationResults);
+  public void addChanges(List<CompileResult> compilationResults, Consumer<String> logging) {
+    CompilatorPostProcess.postProcess(compilationResults, logging);
   
     for(CompileResult res : compilationResults) {
       String filePath = res.getFilePath();

@@ -29,16 +29,14 @@ import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.EmptyTreeIterator;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Consumer;
 
 public class GitChangesCompiler extends ChangesCompiler {
-  private static final Logger log = LoggerFactory.getLogger(GitChangesCompiler.class);
   private final String repoPath;
   private final SourceIndexData sourceIndexData;
   private final Map<Commit, Commit> slimCommits;
@@ -59,10 +57,14 @@ public class GitChangesCompiler extends ChangesCompiler {
   }
 
   public void index(Commit commit) throws IOException {
+    index(commit, System.out::println);
+  }
+
+  public void index(Commit commit, Consumer<String> logging) throws IOException {
     try (FileRepository repository = new FileRepository(this.repoPath)) {
       RevCommit revCommit = repository.parseCommit(commit.getObjectId());
 
-      Pack pack = extractDiffPack(commit, revCommit, repository);
+      Pack pack = extractDiffPack(commit, revCommit, repository, logging);
       List<CompileResult> compilationResults = compileDiff(pack);
 
       if (revCommit.getParentCount() == 0) {
@@ -94,7 +96,7 @@ public class GitChangesCompiler extends ChangesCompiler {
             }
           }
 
-          sourceIndexData.addChanges(compilationResults);
+          sourceIndexData.addChanges(compilationResults, logging);
         }
       }
     }
@@ -104,11 +106,11 @@ public class GitChangesCompiler extends ChangesCompiler {
     return filePathFilter != null && !filePathFilter.contains(filePath);
   }
 
-  private Pack extractDiffPack(Commit commit, RevCommit revCommit, Repository repository) throws IOException {
+  private Pack extractDiffPack(Commit commit, RevCommit revCommit, Repository repository, Consumer<String> logging) throws IOException {
     Pack res = new Pack();
 
     if (revCommit.getParentCount() == 0) {
-      res.getDiffs().addAll(processTree(repository, commit, null, revCommit, null));
+      res.getDiffs().addAll(processTree(repository, commit, null, revCommit, null, logging));
     } else {
       for (int i = 0; i < revCommit.getParentCount(); i++) {
         RevCommit revParentCommit = repository.parseCommit(revCommit.getParent(i));
@@ -116,7 +118,7 @@ public class GitChangesCompiler extends ChangesCompiler {
         commitParent.setObjectId(revParentCommit.getId());
         commitParent = CommonUtil.put(slimCommits, commitParent);
 
-        res.getDiffs().addAll(processTree(repository, commit, commitParent, revCommit, revParentCommit));
+        res.getDiffs().addAll(processTree(repository, commit, commitParent, revCommit, revParentCommit, logging));
       }
     }
 
@@ -166,7 +168,8 @@ public class GitChangesCompiler extends ChangesCompiler {
       Commit commit,
       Commit commitParent,
       RevCommit child,
-      RevCommit parent) throws IOException {
+      RevCommit parent,
+      Consumer<String> logging) throws IOException {
     Set<Diff> res = new HashSet<>();
 
     try (ObjectReader readerChild = repository.newObjectReader();
@@ -227,16 +230,15 @@ public class GitChangesCompiler extends ChangesCompiler {
             } else {
               if(type != null && !type.equals("/dev/null")) {
                 String message = String.format("Lines will not be count for file \"%s\" since it was detected as binary", path);
-                log.info(message);
+                logging.accept(message);
               }
             }
           } catch (MissingObjectException e) {
-            log.error(String.format("MissingObjectException: \"%s\" while processing countLines: \"%s\"",
+            logging.accept(String.format("MissingObjectException: \"%s\" while processing countLines: \"%s\"",
                 e.getMessage(), commitFileChange.getFile().getPath()));
           } catch (DiffException e) {
-            log.error(String.format("Failed to count lines for %s to %s",
-                commitFileChange.getOldId().name(), commitFileChange.getNewId().name()),
-                e);
+            logging.accept(String.format("Failed to count lines for %s to %s",
+                commitFileChange.getOldId().name(), commitFileChange.getNewId().name()));
           }
         }
       }

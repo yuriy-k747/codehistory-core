@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class SourceFileDiffCompiler {
@@ -26,7 +27,11 @@ public class SourceFileDiffCompiler {
   }
 
   public CompileResult compile(SourceType type, InputStream newStream, InputStream oldStream) throws IOException {
-    return compile(type, newPath, oldPath, newStream, oldStream);
+    return compile(type, newStream, oldStream, System.out::println);
+  }
+
+  public CompileResult compile(SourceType type, InputStream newStream, InputStream oldStream, Consumer<String> logging) throws IOException {
+    return compile(type, newPath, oldPath, newStream, oldStream, logging);
   }
 
   private CompileResult compile(
@@ -34,7 +39,8 @@ public class SourceFileDiffCompiler {
       String newPath,
       String oldPath,
       InputStream newStream,
-      InputStream oldStream) throws IOException {
+      InputStream oldStream,
+      Consumer<String> logging) throws IOException {
 
     Parser newParser = null;
     Parser oldParser = null;
@@ -42,7 +48,7 @@ public class SourceFileDiffCompiler {
     // use stream null checks, because oldPath in this case "/dev/null"
     if (newStream != null) {
       newParser = createParser(type, newPath);
-      newParser.parse(newStream);
+      newParser.parse(newStream, logging);
       newParser.compileCriticalErrors();
     } else {
       newParser = createParser(type, oldPath); // create, but not parse - same realm, all deleted
@@ -50,7 +56,7 @@ public class SourceFileDiffCompiler {
 
     if (oldStream != null) {
       oldParser = createParser(type, oldPath);
-      oldParser.parse(oldStream);
+      oldParser.parse(oldStream, logging);
       oldParser.compileCriticalErrors();
     } else {
       oldParser = createParser(type, newPath); // create, but not parse - same realm, all added

@@ -13,8 +13,6 @@ import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -23,9 +21,9 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class CsharpParser extends Parser {
-  private static final Logger log = LoggerFactory.getLogger(CsharpParser.class);
 
   public CsharpParser(String path, LocalSourceIndexData sourceIndexData) {
     super(path, sourceIndexData);
@@ -33,6 +31,11 @@ public class CsharpParser extends Parser {
 
   @Override
   public void parse(InputStream inputStream) throws IOException {
+    parse(inputStream, System.out::println);
+  }
+
+  @Override
+  public void parse(InputStream inputStream, Consumer<String> logging) throws IOException {
     try (BOMInputStream bomInputStream = new BOMInputStream(inputStream)) {
       ByteOrderMark bom = bomInputStream.getBOM();
       String charsetName = bom == null ? "UTF-8" : bom.getCharsetName();
@@ -44,7 +47,7 @@ public class CsharpParser extends Parser {
         } catch (CodeHistoryParseException e) {
           String message = String.format("Failed to parse \"%s\"", this.path);
           criticalErrors.add(new CodeHistoryParseCodeHistoryError(message));
-          log.error(message);
+          logging.accept(message);
         }
       }
     }

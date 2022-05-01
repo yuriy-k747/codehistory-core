@@ -1,21 +1,19 @@
 package dev.codehistory.core.index.sources;
 
 import dev.codehistory.core.entities.sources.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public class CompilatorPostProcess {
-  private static final Logger log = LoggerFactory.getLogger(CompilatorPostProcess.class);
 
   private CompilatorPostProcess() {
     throw new IllegalStateException("CompilatorPostProcess is utils");
   }
 
-  public static void postProcess(List<CompileResult> compilationResults) {
+  public static void postProcess(List<CompileResult> compilationResults, Consumer<String> logging) {
     if(compilationResults.size() < 2) {
       return;
     }
@@ -31,7 +29,7 @@ public class CompilatorPostProcess {
         List<ModuleUnitChange> unitChanges = rightRes.getModuleUnitChanges();
 
         if(unitChanges != null && leftRes.getModuleUnitChanges() != null) {
-          postProcessUnitChanges(leftRes, rightRes, removeLeft, removeRight);
+          postProcessUnitChanges(leftRes, rightRes, removeLeft, removeRight, logging);
         }
 
         if(!removeLeft.isEmpty()) {
@@ -45,7 +43,8 @@ public class CompilatorPostProcess {
       CompileResult leftRes,
       CompileResult rightRes,
       ArrayList<ModuleUnitChange> removeLeft,
-      ArrayList<ModuleUnitChange> removeRight) {
+      ArrayList<ModuleUnitChange> removeRight,
+      Consumer<String> logging) {
     for (ModuleUnitChange rightChange : rightRes.getModuleUnitChanges()) {
       // find if same unit has changes in the same commit (so it have same identifier and keyword).
       Optional<ModuleUnitChange> leftItem = probeLeftItem(leftRes, rightChange);
@@ -80,7 +79,7 @@ public class CompilatorPostProcess {
                     leftRes.getFilePath(), left.toString(),
                     rightRes.getFilePath(), right.toString());
 
-            log.error(warning);
+            logging.accept(warning);
           }
         }
       }

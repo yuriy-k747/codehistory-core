@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public abstract class Parser {
   protected final String path;
@@ -23,6 +24,8 @@ public abstract class Parser {
   }
 
   public abstract void parse(InputStream inputStream) throws IOException;
+
+  public abstract void parse(InputStream inputStream, Consumer<String> logging) throws IOException;
 
   public abstract void compileCriticalErrors();
 

@@ -2,10 +2,10 @@ package dev.codehistory.core.commands;
 
 import dev.codehistory.core.index.sources.data.SourceIndexData;
 
-public class FileHistoryResult {
+public class FilesHistoryResult {
   private final SourceIndexData data;
   
-  public FileHistoryResult(SourceIndexData data) {
+  public FilesHistoryResult(SourceIndexData data) {
     this.data = data;
   }
 }

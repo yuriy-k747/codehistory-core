@@ -42,11 +42,11 @@ public class GitUtilCore {
     }
   }
   
-  public static List<RevCommit> getFileHistory(FileRepository repository, AnyObjectId id, String filePath) throws IOException {
+  public static List<RevCommit> getFilesHistory(FileRepository repository, AnyObjectId id, Collection<String> filePaths) throws IOException {
     List<RevCommit> res = new ArrayList<>();
     
     RevWalk revWalk = new RevWalk(repository);
-    TreeFilter filter = AndTreeFilter.create(PathFilterGroup.createFromStrings(filePath), TreeFilter.ANY_DIFF);
+    TreeFilter filter = AndTreeFilter.create(PathFilterGroup.createFromStrings(filePaths), TreeFilter.ANY_DIFF);
     revWalk.setTreeFilter(filter);
     
     RevCommit rootCommit = revWalk.parseCommit(id);
@@ -58,6 +58,10 @@ public class GitUtilCore {
     }
     
     return res;
+  }
+  
+  public static List<RevCommit> getFileHistory(FileRepository repository, AnyObjectId id, String filePath) throws IOException {
+    return getFilesHistory(repository, id, List.of(filePath));
   }
   
   public static CanonicalTreeParser createTreeParser(AnyObjectId anyObjectId, ObjectReader objectReader) throws IOException {
