@@ -66,6 +66,7 @@ public class GitChangesCompiler extends ChangesCompiler {
 
       Pack pack = extractDiffPack(commit, revCommit, repository, logging);
       List<CompileResult> compilationResults = compileDiff(pack);
+      setCommit(commit, compilationResults);
 
       if (revCommit.getParentCount() == 0) {
         for (CompileResult res : compilationResults) {
@@ -101,9 +102,33 @@ public class GitChangesCompiler extends ChangesCompiler {
       }
     }
   }
+  
+  private static void setCommit(Commit commit, List<CompileResult> compileResults) {
+    for (CompileResult compileResult : compileResults) {
+      for (ModuleUnitChange unitChange : compileResult.getModuleUnitChanges()) {
+        unitChange.setCommit(commit);
+      }
+  
+      for (ModuleUnitMemberChange memberChange : compileResult.getModuleUnitMemberChanges()) {
+        memberChange.setCommit(commit);
+      }
+    }
+  }
 
   private boolean skip(String filePath) {
-    return filePathFilter != null && !filePathFilter.contains(filePath);
+    if(filePathFilter == null || filePathFilter.isEmpty()) {
+      return false;
+    }
+    
+    if(isDeleted(filePath)) {
+      return false;
+    }
+    
+    return !filePathFilter.contains(filePath);
+  }
+  
+  private static boolean isDeleted(String filePath) {
+    return filePath == null || filePath.equals("/dev/null");
   }
 
   private Pack extractDiffPack(Commit commit, RevCommit revCommit, Repository repository, Consumer<String> logging) throws IOException {
@@ -189,8 +214,14 @@ public class GitChangesCompiler extends ChangesCompiler {
         for (DiffEntry diffEntry : diffEntries) {
           DiffEntry.ChangeType changeType = diffEntry.getChangeType();
   
-          if(skip(diffEntry.getOldPath())) {
-            continue;
+          if(isDeleted(diffEntry.getOldPath())) {
+            if(skip(diffEntry.getNewPath())) {
+              continue;
+            }
+          } else {
+            if(skip(diffEntry.getOldPath())) {
+              continue;
+            }
           }
           
           CommitFileChange commitFileChange;
@@ -216,7 +247,7 @@ public class GitChangesCompiler extends ChangesCompiler {
 
           try {
             String path = diffEntry.getNewPath();
-            if(path == null || path.equals("/dev/null")) {
+            if(isDeleted(path)) {
               path = diffEntry.getOldPath();
             }
 
@@ -228,7 +259,7 @@ public class GitChangesCompiler extends ChangesCompiler {
             if(type != null && type.startsWith("text")) {
               countLines(repository, commitFileChange);
             } else {
-              if(type != null && !type.equals("/dev/null")) {
+              if(!isDeleted(type)) {
                 String message = String.format("Lines will not be count for file \"%s\" since it was detected as binary", path);
                 logging.accept(message);
               }

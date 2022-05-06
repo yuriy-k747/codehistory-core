@@ -13,22 +13,19 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LogCommand;
 import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.diff.DiffConfig;
+import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.lib.*;
-import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevSort;
-import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.revwalk.*;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.TreeWalk;
-import org.eclipse.jgit.treewalk.filter.AndTreeFilter;
-import org.eclipse.jgit.treewalk.filter.PathFilterGroup;
+import org.eclipse.jgit.treewalk.filter.OrTreeFilter;
 import org.eclipse.jgit.treewalk.filter.TreeFilter;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class GitUtilCore {
 
@@ -36,17 +33,29 @@ public class GitUtilCore {
     throw new IllegalStateException("GitUtilCore is utils");
   }
 
-  public static List<RevCommit> getFileHistory(String repoPath, String filePath) throws IOException {
+  public static GitFilesHistoryResult getFileHistory(String repoPath, String filePath) throws IOException {
     try (FileRepository repository = new FileRepository(repoPath)) {
       return getFileHistory(repository, repository.resolve(Constants.HEAD), filePath);
     }
   }
   
-  public static List<RevCommit> getFilesHistory(FileRepository repository, AnyObjectId id, Collection<String> filePaths) throws IOException {
-    List<RevCommit> res = new ArrayList<>();
+  public static GitFilesHistoryResult getFilesHistory(FileRepository repository, AnyObjectId id, Collection<String> filePaths) throws IOException {
+    Set<RevCommit> revCommits = new HashSet<>();
     
+    DiffConfig diffConfig = repository.getConfig().get(DiffConfig.KEY);
+    
+    List<TreeFilter> followFilters = new ArrayList<>(filePaths.size());
+    List<GitFileHistoryRenameCallback> renameCallbacks = new ArrayList<>();
+    for (String filePath : filePaths) {
+      FollowFilter followFilter = FollowFilter.create(filePath, diffConfig);
+      GitFileHistoryRenameCallback renameCallback = new GitFileHistoryRenameCallback(filePath);
+      renameCallbacks.add(renameCallback);
+      followFilter.setRenameCallback(renameCallback);
+      followFilters.add(followFilter);
+    }
+    TreeFilter filter = followFilters.size() > 1 ? OrTreeFilter.create(followFilters) : followFilters.get(0);
+  
     RevWalk revWalk = new RevWalk(repository);
-    TreeFilter filter = AndTreeFilter.create(PathFilterGroup.createFromStrings(filePaths), TreeFilter.ANY_DIFF);
     revWalk.setTreeFilter(filter);
     
     RevCommit rootCommit = revWalk.parseCommit(id);
@@ -54,13 +63,18 @@ public class GitUtilCore {
     revWalk.markStart(rootCommit);
     
     for (RevCommit revCommit : revWalk) {
-      res.add(revCommit);
+      revCommits.add(revCommit);
+    }
+  
+    GitFilesHistoryResult res = new GitFilesHistoryResult(revCommits);
+    for (GitFileHistoryRenameCallback renameCallback : renameCallbacks) {
+      res.getFilePathsWithRenames().put(renameCallback.getRootPath(), renameCallback.getRenames());
     }
     
     return res;
   }
   
-  public static List<RevCommit> getFileHistory(FileRepository repository, AnyObjectId id, String filePath) throws IOException {
+  public static GitFilesHistoryResult getFileHistory(FileRepository repository, AnyObjectId id, String filePath) throws IOException {
     return getFilesHistory(repository, id, List.of(filePath));
   }
   
@@ -94,8 +108,8 @@ public class GitUtilCore {
     }
   }
 
-  public static List<RevCommit> getCommitsInBranch(Repository repository, String ref) throws IOException, GitAPIException {
-    List<RevCommit> res = new ArrayList<>();
+  public static Set<RevCommit> getCommitsInBranch(Repository repository, String ref) throws IOException, GitAPIException {
+    Set<RevCommit> res = new HashSet<>();
 
     try (Git git = new Git(repository)) {
       LogCommand logCommand = git.log().add(repository.resolve(ref));
@@ -107,6 +121,8 @@ public class GitUtilCore {
     
     return res;
   }
+  
+  
 
   public static boolean isReacheable(Repository repository, ObjectId child, ObjectId probingParent) throws IOException {
     try (RevWalk walk = new RevWalk(repository)) {
@@ -244,4 +260,6 @@ public class GitUtilCore {
     
     return remoteUrl;
   }
+  
+  
 }

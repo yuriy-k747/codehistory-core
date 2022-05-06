@@ -1,17 +1,21 @@
 package dev.codehistory.core.commands;
 
-import dev.codehistory.core.ExecutionTime;
+import dev.codehistory.core.entities.sources.ModuleUnitChange;
+import dev.codehistory.core.entities.sources.ModuleUnitMemberChange;
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class FilesHistoryCommandTests {
   
   @Ignore("Requires PDFBOX repository")
   @Test
-  public void test() throws Exception {
+  public void testMultipleInput() throws Exception {
     String repoPath = System.getenv("CODEHISTORY_TESTS_PDFBOX_REPO_PATH");
     
     Set<String> paths = new HashSet<>();
@@ -43,6 +47,18 @@ public class FilesHistoryCommandTests {
     paths.add("pdfbox/src/main/java/org/apache/pdfbox/pdfparser/COSParser.java");
     paths.add("pdfbox/src/main/java/org/apache/pdfbox/util/IterativeMergeSort.java");
     paths.add("pdfbox/src/main/java/org/apache/pdfbox/Loader.java");
+    
+    FilesHistoryCommand command = new FilesHistoryCommand(repoPath, paths);
+    FilesHistoryResult res = command.call();
+  }
+  
+  @Ignore("Requires PDFBOX repository")
+  @Test
+  public void testXMLUtil() throws Exception {
+    String repoPath = System.getenv("CODEHISTORY_TESTS_PDFBOX_REPO_PATH");
+    
+    Set<String> paths = new HashSet<>();
+    paths.add("pdfbox/src/main/java/org/apache/pdfbox/util/XMLUtil.java");
     
     FilesHistoryCommand command = new FilesHistoryCommand(repoPath, paths);
     FilesHistoryResult res = command.call();

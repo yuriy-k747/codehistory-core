@@ -174,7 +174,8 @@ public class Commit extends IdEntity {
 
     @Override
     public String toString() {
-        return shortMessage == null ? getId().toString() : getShortMessage();
+        String message = shortMessage == null ? getId().toString() : getShortMessage();
+        return String.format("%s %s", objectId.getName().substring(0, 5), message);
     }
 
     public List<CommitIssue> toCommitIssues() {

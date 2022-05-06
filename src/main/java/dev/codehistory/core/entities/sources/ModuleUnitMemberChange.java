@@ -12,7 +12,6 @@ public class ModuleUnitMemberChange extends SourceChange {
   private Long movedFromId;
   private ModuleUnit movedFrom;
   private Long fileId;
-  private File file;
   private Long originId;
   private ModuleUnitMember origin;
 
@@ -97,14 +96,6 @@ public class ModuleUnitMemberChange extends SourceChange {
 
   public void setMovedFrom(ModuleUnit movedFrom) {
     this.movedFrom = movedFrom;
-  }
-  
-  public File getFile() {
-    return file;
-  }
-  
-  public void setFile(File file) {
-    this.file = file;
   }
   
   public Long getFileId() {

@@ -46,4 +46,8 @@ public class LocalSourceIndexData extends IndexData {
   public Map<ModuleUnitMemberChange, ModuleUnitMemberChange> getModuleUnitMemberChanges() {
     return new HashMap<>(moduleUnitMemberChanges);
   }
+  
+  public Map<ModuleUnitChange, ModuleUnitChange> getModuleUnitChanges() {
+    return new HashMap<>(moduleUnitChanges);
+  }
 }
