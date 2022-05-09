@@ -146,7 +146,8 @@ public class GitChangesCompiler extends ChangesCompiler {
       res.getDiffs().addAll(processTree(repository, commit, null, revCommit, null, logging));
     } else {
       for (int i = 0; i < revCommit.getParentCount(); i++) {
-        RevCommit revParentCommit = repository.parseCommit(revCommit.getParent(i));
+        RevCommit temp = repository.parseCommit(ObjectId.fromString(revCommit.name())); // incorrect parent loader workaround
+        RevCommit revParentCommit = repository.parseCommit(temp.getParent(i));
         Commit commitParent = new Commit();
         commitParent.setObjectId(revParentCommit.getId());
         commitParent = CommonUtil.put(slimCommits, commitParent);
