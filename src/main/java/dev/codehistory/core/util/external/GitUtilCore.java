@@ -40,8 +40,6 @@ public class GitUtilCore {
   }
   
   public static GitFilesHistoryResult getFilesHistory(FileRepository repository, AnyObjectId id, Collection<String> filePaths) throws IOException {
-    Set<RevCommit> revCommits = new HashSet<>();
-    
     DiffConfig diffConfig = repository.getConfig().get(DiffConfig.KEY);
     
     List<TreeFilter> followFilters = new ArrayList<>(filePaths.size());
@@ -53,18 +51,9 @@ public class GitUtilCore {
       followFilter.setRenameCallback(renameCallback);
       followFilters.add(followFilter);
     }
-    TreeFilter filter = followFilters.size() > 1 ? OrTreeFilter.create(followFilters) : followFilters.get(0);
   
-    RevWalk revWalk = new RevWalk(repository);
-    revWalk.setTreeFilter(filter);
-    
-    RevCommit rootCommit = revWalk.parseCommit(id);
-    revWalk.sort(RevSort.COMMIT_TIME_DESC);
-    revWalk.markStart(rootCommit);
-    
-    for (RevCommit revCommit : revWalk) {
-      revCommits.add(revCommit);
-    }
+    // Set<RevCommit> revCommits = walkWithOrTreeFilter(repository, id, followFilters); // not working for follow filter combined with or
+    Set<RevCommit> revCommits = walkForEachFiter(repository, id, followFilters);
   
     GitFilesHistoryResult res = new GitFilesHistoryResult(revCommits);
     for (GitFileHistoryRenameCallback renameCallback : renameCallbacks) {
@@ -72,6 +61,46 @@ public class GitUtilCore {
     }
     
     return res;
+  }
+  
+  // inefficient
+  private static Set<RevCommit> walkForEachFiter(FileRepository repository, AnyObjectId id, List<TreeFilter> filters) throws IOException {
+    Set<RevCommit> revCommits = new HashSet<>();
+  
+    for (TreeFilter filter : filters) {
+      RevWalk revWalk = new RevWalk(repository);
+      revWalk.setTreeFilter(filter);
+  
+      RevCommit rootCommit = revWalk.parseCommit(id);
+      revWalk.sort(RevSort.COMMIT_TIME_DESC);
+      revWalk.markStart(rootCommit);
+  
+      for (RevCommit revCommit : revWalk) {
+        revCommits.add(revCommit);
+      }
+    }
+  
+    return revCommits;
+  }
+  
+  // OrTreeFilter.create combined with FollowFilter doesn't work as expected
+  private static Set<RevCommit> walkWithOrTreeFilter(FileRepository repository, AnyObjectId id, List<TreeFilter> followFilters) throws IOException {
+    Set<RevCommit> revCommits = new HashSet<>();
+    
+    TreeFilter filter = followFilters.size() > 1 ? OrTreeFilter.create(followFilters) : followFilters.get(0);
+  
+    RevWalk revWalk = new RevWalk(repository);
+    revWalk.setTreeFilter(filter);
+  
+    RevCommit rootCommit = revWalk.parseCommit(id);
+    revWalk.sort(RevSort.COMMIT_TIME_DESC);
+    revWalk.markStart(rootCommit);
+  
+    for (RevCommit revCommit : revWalk) {
+      revCommits.add(revCommit);
+    }
+    
+    return revCommits;
   }
   
   public static GitFilesHistoryResult getFileHistory(FileRepository repository, AnyObjectId id, String filePath) throws IOException {

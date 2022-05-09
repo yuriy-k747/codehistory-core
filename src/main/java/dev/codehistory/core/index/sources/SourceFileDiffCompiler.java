@@ -1,5 +1,6 @@
 package dev.codehistory.core.index.sources;
 
+import dev.codehistory.core.entities.diff.DiffHint;
 import dev.codehistory.core.entities.diff.SourceType;
 import dev.codehistory.core.entities.sources.Module;
 import dev.codehistory.core.entities.sources.*;
@@ -14,6 +15,7 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -26,12 +28,12 @@ public class SourceFileDiffCompiler {
     this.oldPath = oldPath;
   }
 
-  public CompileResult compile(SourceType type, InputStream newStream, InputStream oldStream) throws IOException {
-    return compile(type, newStream, oldStream, System.out::println);
+  public CompileResult compile(SourceType type, InputStream newStream, InputStream oldStream, DiffHint diffHint) throws IOException {
+    return compile(type, newStream, oldStream, diffHint, System.out::println);
   }
 
-  public CompileResult compile(SourceType type, InputStream newStream, InputStream oldStream, Consumer<String> logging) throws IOException {
-    return compile(type, newPath, oldPath, newStream, oldStream, logging);
+  public CompileResult compile(SourceType type, InputStream newStream, InputStream oldStream, DiffHint diffHint, Consumer<String> logging) throws IOException {
+    return compile(type, newPath, oldPath, newStream, oldStream, diffHint, logging);
   }
 
   private CompileResult compile(
@@ -40,6 +42,7 @@ public class SourceFileDiffCompiler {
       String oldPath,
       InputStream newStream,
       InputStream oldStream,
+      DiffHint diffHint,
       Consumer<String> logging) throws IOException {
 
     Parser newParser = null;
@@ -62,10 +65,10 @@ public class SourceFileDiffCompiler {
       oldParser = createParser(type, newPath); // create, but not parse - same realm, all added
     }
 
-    return compile(newParser, oldParser);
+    return compile(newParser, oldParser, diffHint);
   }
 
-  private static CompileResult compile(Parser newParser, Parser oldParser) {
+  private static CompileResult compile(Parser newParser, Parser oldParser, DiffHint diffHint) {
     List<CodeHistoryError> oldCriticalErrors = oldParser.getCriticalErrors();
     List<CodeHistoryError> newCriticalErrors = newParser.getCriticalErrors();
 
@@ -77,7 +80,7 @@ public class SourceFileDiffCompiler {
       List<ModuleUnitMemberChange> memberChanges = compilator.getMemberChanges();
   
       CompileResult res = new CompileResult(unitChanges, memberChanges, oldCriticalErrors, newCriticalErrors);
-      detectMoves(res);
+      detectMoves(res, diffHint);
       return res;
 
     } else {
@@ -85,14 +88,15 @@ public class SourceFileDiffCompiler {
     }
   }
 
-  private static void detectMoves(CompileResult res) {
+  private static void detectMoves(CompileResult res, DiffHint diffHint) {
     List<ModuleUnitMemberChange> memberChanges = res.getModuleUnitMemberChanges();
-    detectChanges(res.getModuleUnitChanges(), memberChanges);
+    detectMoves(res.getModuleUnitChanges(), memberChanges, diffHint);
   }
 
-  private static void detectChanges(
+  private static void detectMoves(
       List<ModuleUnitChange> moduleUnitChanges,
-      List<ModuleUnitMemberChange> memberChanges) {
+      List<ModuleUnitMemberChange> memberChanges,
+      DiffHint diffHint) {
     List<ModuleUnitChange> added = getByChangeType(moduleUnitChanges, ModuleUnitChangeType.ADDED);
     List<ModuleUnitChange> deleted = getByChangeType(moduleUnitChanges, ModuleUnitChangeType.DELETED);
 
@@ -101,7 +105,12 @@ public class SourceFileDiffCompiler {
         .collect(Collectors.toMap(ModuleUnitChange::getModuleUnit, c -> c));
 
     for (ModuleUnitChange itemAddedChange : added) {
-      ModuleUnit itemDeleted = findBySha1(deletedModuleUnits.keySet(), itemAddedChange.getModuleUnit());
+      Set<ModuleUnit> deletedUnits = deletedModuleUnits.keySet();
+      ModuleUnit itemDeleted = findBySha1(deletedUnits, itemAddedChange.getModuleUnit());
+      if(itemDeleted == null && (diffHint.equals(DiffHint.COPY) || diffHint.equals(DiffHint.RENAME))) {
+        itemDeleted = findOtherModuleByDefinition(deletedUnits, itemAddedChange.getModuleUnit());
+      }
+      
       if (itemDeleted != null) {
         ModuleUnitChange itemDeletedChange = deletedModuleUnits.get(itemDeleted);
 
@@ -156,6 +165,21 @@ public class SourceFileDiffCompiler {
       throw new IllegalStateException();
     }
 
+    return item.isEmpty() ? null : item.get(0);
+  }
+  
+  private static ModuleUnit findOtherModuleByDefinition(Collection<ModuleUnit> units, ModuleUnit unit) {
+    List<ModuleUnit> item = units.stream()
+        .filter(moduleUnit ->
+            !moduleUnit.getModule().equals(unit.getModule())
+            && moduleUnit.getKeyword().equals(unit.getKeyword())
+            && moduleUnit.getIdentifier().equals(unit.getIdentifier()))
+        .collect(Collectors.toList());
+  
+    if (item.size() > 1) {
+      throw new IllegalStateException();
+    }
+  
     return item.isEmpty() ? null : item.get(0);
   }
 

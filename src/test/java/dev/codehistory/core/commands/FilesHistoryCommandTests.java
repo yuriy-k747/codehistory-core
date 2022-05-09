@@ -2,7 +2,6 @@ package dev.codehistory.core.commands;
 
 import dev.codehistory.core.entities.sources.ModuleUnitChange;
 import dev.codehistory.core.entities.sources.ModuleUnitMemberChange;
-import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -50,11 +49,13 @@ public class FilesHistoryCommandTests {
     
     FilesHistoryCommand command = new FilesHistoryCommand(repoPath, paths);
     FilesHistoryResult res = command.call();
+    Map<String, List<ModuleUnitChange>> unitChanges = res.getUnitChanges();
+    Map<String, List<ModuleUnitMemberChange>> memberChanges = res.getMemberChanges();
   }
   
   @Ignore("Requires PDFBOX repository")
   @Test
-  public void testXMLUtil() throws Exception {
+  public void testSingleXMLUtil() throws Exception {
     String repoPath = System.getenv("CODEHISTORY_TESTS_PDFBOX_REPO_PATH");
     
     Set<String> paths = new HashSet<>();
@@ -62,5 +63,22 @@ public class FilesHistoryCommandTests {
     
     FilesHistoryCommand command = new FilesHistoryCommand(repoPath, paths);
     FilesHistoryResult res = command.call();
+    Map<String, List<ModuleUnitChange>> unitChanges = res.getUnitChanges();
+    Map<String, List<ModuleUnitMemberChange>> memberChanges = res.getMemberChanges();
+  }
+  
+  @Ignore("Requires PDFBOX repository")
+  @Test
+  public void testTwoFiles() throws Exception {
+    String repoPath = System.getenv("CODEHISTORY_TESTS_PDFBOX_REPO_PATH");
+    
+    Set<String> paths = new HashSet<>();
+    paths.add("pdfbox/src/main/java/org/apache/pdfbox/util/XMLUtil.java");
+    paths.add("pdfbox/src/main/java/org/apache/pdfbox/cos/COSArray.java");
+    
+    FilesHistoryCommand command = new FilesHistoryCommand(repoPath, paths);
+    FilesHistoryResult res = command.call();
+    Map<String, List<ModuleUnitChange>> unitChanges = res.getUnitChanges();
+    Map<String, List<ModuleUnitMemberChange>> memberChanges = res.getMemberChanges();
   }
 }

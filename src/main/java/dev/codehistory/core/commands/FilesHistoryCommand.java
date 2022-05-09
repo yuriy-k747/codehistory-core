@@ -66,9 +66,7 @@ public class FilesHistoryCommand implements Callable<FilesHistoryResult> {
     for (RevCommit revCommit : filesHistory.getCommits()) {
       commits.add(new Commit(revCommit));
     }
-  
-    commits = commits.stream().sorted((o1, o2) -> o1.getCreated().compareTo(o2.getCreated())).collect(Collectors.toList());
-  
+    
     final int nThreads = 8;
     final int minSize = 25;
     int batchSize = commits.size() < minSize ? minSize : commits.size() / nThreads;

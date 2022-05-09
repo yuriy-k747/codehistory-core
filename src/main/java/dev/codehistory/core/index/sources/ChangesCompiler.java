@@ -54,7 +54,7 @@ public class ChangesCompiler {
   protected CompileResult compile(SourceFileDiffCompiler sourceFileDiffCompiler, Diff diff) throws IOException {
     try(DiffBody body = diff.openDiffBody()) {
       ExecutionTime time = ExecutionTime.start();
-      CompileResult res = sourceFileDiffCompiler.compile(diff.getKey().getType(), body.getNew(), body.getOld());
+      CompileResult res = sourceFileDiffCompiler.compile(diff.getKey().getType(), body.getNew(), body.getOld(), diff.getDiffHint());
       this.lastParsingDuration = time.stop();
       return res;
     }

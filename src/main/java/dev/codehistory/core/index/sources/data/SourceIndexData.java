@@ -135,7 +135,7 @@ public class SourceIndexData extends LocalSourceIndexData {
     addError(newFile, null);
   }
   
-  public void addChanges(List<CompileResult> compilationResults, Consumer<String> logging) {
+  public void addChanges(List<CompileResult> compilationResults, Commit commit, Consumer<String> logging) {
     CompilatorPostProcess.postProcess(compilationResults, logging);
   
     for(CompileResult res : compilationResults) {
@@ -144,7 +144,7 @@ public class SourceIndexData extends LocalSourceIndexData {
       if (res.isFaulted()) {
         // we don't need to compile old file parse error, because it already/will be compiled when time for this parent commit will come.
         if (!res.getNewCriticalErrors().isEmpty()) {
-          addError(filePath);
+          addError(filePath, commit);
         }
       } else {
         addChange(res, filePath);

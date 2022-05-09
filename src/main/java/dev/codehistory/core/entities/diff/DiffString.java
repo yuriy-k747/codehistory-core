@@ -11,13 +11,13 @@ public class DiffString extends Diff {
   private final String oldContent;
 
   public DiffString(DiffKey key, String newContent) {
-    super(key);
+    super(key, DiffHint.NONE);
     this.newContent = newContent;
     this.oldContent = null;
   }
 
   public DiffString(DiffKey key, String newContent, String oldContent) {
-    super(key);
+    super(key, DiffHint.NONE);
     this.newContent = newContent;
     this.oldContent = oldContent;
   }

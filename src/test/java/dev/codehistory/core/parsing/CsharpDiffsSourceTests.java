@@ -1,5 +1,6 @@
 package dev.codehistory.core.parsing;
 
+import dev.codehistory.core.entities.diff.DiffHint;
 import dev.codehistory.core.entities.diff.SourceType;
 import dev.codehistory.core.entities.sources.ModuleUnitChange;
 import dev.codehistory.core.entities.sources.ModuleUnitMemberChange;
@@ -113,7 +114,7 @@ public class CsharpDiffsSourceTests extends SourceTestsBase {
   public void deleted_class() throws IOException {
     try (InputStream oldStream = loadFileStream("csharp/moves/Enity_file1.cs")) {
       SourceFileDiffCompiler compilatorOfFileChange = new SourceFileDiffCompiler("", "csharp/moves/Enity_file1.cs");
-      CompileResult res = compilatorOfFileChange.compile(SourceType.CSHARP, null, oldStream);
+      CompileResult res = compilatorOfFileChange.compile(SourceType.CSHARP, null, oldStream, DiffHint.NONE);
 
       var pair = Pair.of(res.getModuleUnitChanges(), res.getModuleUnitMemberChanges());
       List<ModuleUnitChange> unitChanges = pair.getLeft();

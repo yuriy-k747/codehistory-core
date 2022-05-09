@@ -10,8 +10,8 @@ public class DiffObjectId extends Diff {
   private final ObjectId newId;
   private final ObjectId oldId;
 
-  public DiffObjectId(DiffKey key, Repository repository, ObjectId newId, ObjectId oldId) {
-    super(key);
+  public DiffObjectId(DiffKey key, Repository repository, ObjectId newId, ObjectId oldId, DiffHint diffHint) {
+    super(key, diffHint);
     this.repository = repository;
     this.newId = newId;
     this.oldId = oldId;

@@ -1,5 +1,6 @@
 package dev.codehistory.core.commands;
 
+import dev.codehistory.core.entities.sources.ModuleUnit;
 import dev.codehistory.core.entities.sources.ModuleUnitChange;
 import dev.codehistory.core.entities.sources.ModuleUnitMemberChange;
 import dev.codehistory.core.entities.sources.SourceChange;
@@ -10,23 +11,24 @@ import java.util.stream.Collectors;
 
 public class FilesHistoryResult {
   private final SourceIndexData data;
-  Map<String, Set<String>> filePathsWithRenames;
-  private final Map<String, List<ModuleUnitMemberChange>> pathMemberChanges;
-  private final Map<String, List<ModuleUnitChange>> pathUnitChanges;
+  private final Map<String, Set<String>> rootPaths;
+  private final Map<String, List<ModuleUnitMemberChange>> memberChanges;
+  private final Map<String, List<ModuleUnitChange>> unitChanges;
+  private final Map<String, List<ModuleUnit>> snapshot = null;
   
   public FilesHistoryResult(SourceIndexData data, Map<String, Set<String>> rootPaths) {
     this.data = data;
-    this.filePathsWithRenames = rootPaths;
-    this.pathMemberChanges = mapToPath(data.getModuleUnitMemberChanges().values());
-    this.pathUnitChanges = mapToPath(data.getModuleUnitChanges().values());
+    this.rootPaths = rootPaths;
+    this.memberChanges = mapToPath(data.getModuleUnitMemberChanges().values());
+    this.unitChanges = mapToPath(data.getModuleUnitChanges().values());
   }
   
-  public Map<String, List<ModuleUnitMemberChange>> getPathMemberChanges() {
-    return pathMemberChanges;
+  public Map<String, List<ModuleUnitMemberChange>> getMemberChanges() {
+    return memberChanges;
   }
   
-  public Map<String, List<ModuleUnitChange>> getPathUnitChanges() {
-    return pathUnitChanges;
+  public Map<String, List<ModuleUnitChange>> getUnitChanges() {
+    return unitChanges;
   }
   
   private <T extends SourceChange> Map<String, List<T>> mapToPath(Collection<T> sourceChanges) {
@@ -45,12 +47,13 @@ public class FilesHistoryResult {
   }
   
   private <T extends SourceChange> Map<String, List<T>> groupPaths(Map<String, List<T>> mapped) {
-    Map<String, List<T>> res = new HashMap<>(filePathsWithRenames.keySet().size());
+    Map<String, List<T>> res = new HashMap<>();
   
-    filePathsWithRenames.forEach((s, ts) -> {
+    rootPaths.forEach((s, ts) -> {
       for (String t : ts) {
         if(mapped.containsKey(t)) {
-          res.put(s, mapped.get(t));
+          List<T> changes = res.computeIfAbsent(s, k -> new ArrayList<>());
+          changes.addAll(mapped.get(t));
         }
       }
     });
@@ -60,11 +63,12 @@ public class FilesHistoryResult {
   
   private <T extends SourceChange> void sort(Map<String, List<T>> mapped) {
     mapped.forEach((s, ts) -> {
-      mapped.put(s, ts.stream().sorted((o1, o2) -> o2.getCommit().getCreated().compareTo(o1.getCommit().getCreated())).collect(Collectors.toList()));
+      List<T> sorted = ts.stream().sorted((o1, o2) -> o2.getCommit().getCreated().compareTo(o1.getCommit().getCreated())).collect(Collectors.toList());
+      mapped.put(s, sorted);
     });
   }
   
-  public Map<String, Set<String>> getFilePathsWithRenames() {
-    return filePathsWithRenames;
+  public Map<String, Set<String>> getRootPaths() {
+    return rootPaths;
   }
 }

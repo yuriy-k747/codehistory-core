@@ -4,9 +4,11 @@ import java.io.IOException;
 
 public abstract class Diff {
   private final DiffKey key;
-
-  protected Diff(DiffKey key) {
+  private final DiffHint diffHint;
+  
+  protected Diff(DiffKey key, DiffHint diffHint) {
     this.key = key;
+    this.diffHint = diffHint;
   }
 
   public abstract DiffBody openDiffBody() throws IOException;
@@ -17,5 +19,9 @@ public abstract class Diff {
 
   public DiffKey getKey() {
     return key;
+  }
+  
+  public DiffHint getDiffHint() {
+    return diffHint;
   }
 }

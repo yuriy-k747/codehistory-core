@@ -94,14 +94,13 @@ public class ModuleUnitChange extends SourceChange {
     }
 
     if (getChangeType() == ModuleUnitChangeType.MOVED_TO) {
-      return String.format("%s %s", getChangeType(), movedTo.getName());
+      return String.format("%s%s %s", getShortSha1(), getChangeType(), movedTo.getName());
     }
 
     if (getSourceState() == null) {
       throw new IllegalStateException("If change is not DELETED, it must have source state");
     }
-
-
+    
     String changeTypeVal;
     if(getChangeType() == ModuleUnitChangeType.MOVED_FROM) {
       changeTypeVal = ModuleUnitChangeType.MOVED_FROM + " " + movedFrom.getName();
@@ -115,13 +114,14 @@ public class ModuleUnitChange extends SourceChange {
       definition = SourcesUtil.fillUnitDefinition(definition, moduleUnit.getKeyword(), moduleUnit.getIdentifier());
     }
     
-    return String.format("%s %s (start ln: %d col: %d, end ln: %d col: %d)",
+    return String.format("%s%s %s (start ln: %d col: %d, end ln: %d col: %d)",
+        getShortSha1(),
         changeTypeVal,
         definition,
         state.getStartLine(), state.getStartPos(),
         state.getEndLine(), state.getEndPos());
   }
-
+  
   public Long getMovedToId() {
     return movedToId;
   }
@@ -176,5 +176,14 @@ public class ModuleUnitChange extends SourceChange {
   
   public void setOriginId(Long originId) {
     this.originId = originId;
+  }
+  
+  private String getShortSha1() {
+    String sha = "";
+    if(getCommit() != null) {
+      sha = getCommit().getShortSha1() + " ";
+    }
+    
+    return sha;
   }
 }

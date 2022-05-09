@@ -89,6 +89,10 @@ public class GitChangesCompiler extends ChangesCompiler {
           commitParent = CommonUtil.put(slimCommits, commitParent);
 
           for (CompileResult res : compilationResults) {
+            if(res.getModuleUnitChanges() == null) {
+              continue;
+            }
+            
             for (ModuleUnitChange unitChange : res.getModuleUnitChanges()) {
               unitChange.setCommits(commit, commitParent);
             }
@@ -97,7 +101,7 @@ public class GitChangesCompiler extends ChangesCompiler {
             }
           }
 
-          sourceIndexData.addChanges(compilationResults, logging);
+          sourceIndexData.addChanges(compilationResults, commit, logging);
         }
       }
     }
@@ -105,6 +109,10 @@ public class GitChangesCompiler extends ChangesCompiler {
   
   private static void setCommit(Commit commit, List<CompileResult> compileResults) {
     for (CompileResult compileResult : compileResults) {
+      if(compileResult.getModuleUnitMemberChanges() == null) {
+        continue;
+      }
+      
       for (ModuleUnitChange unitChange : compileResult.getModuleUnitChanges()) {
         unitChange.setCommit(commit);
       }
@@ -239,7 +247,7 @@ public class GitChangesCompiler extends ChangesCompiler {
 
           ObjectId newId = diffEntry.getNewId().toObjectId();
           ObjectId oldId = diffEntry.getOldId().toObjectId();
-          Diff diff = new DiffObjectId(new DiffPathKey(diffEntry.getOldPath(), diffEntry.getNewPath()), repository, newId, oldId);
+          Diff diff = new DiffObjectId(new DiffPathKey(diffEntry.getOldPath(), diffEntry.getNewPath()), repository, newId, oldId, toDiffHint(diffEntry.getChangeType()));
           res.add(diff);
 
           commitFileChange.setNewId(newId);
@@ -439,5 +447,22 @@ public class GitChangesCompiler extends ChangesCompiler {
     File file = new File();
     file.setPath(path);
     return sourceIndexData.put(path, file);
+  }
+  
+  private static DiffHint toDiffHint(DiffEntry.ChangeType changeType) {
+    switch (changeType) {
+      case ADD:
+        return DiffHint.ADD;
+      case MODIFY:
+        return DiffHint.MODIFY;
+      case DELETE:
+        return DiffHint.DELETE;
+      case RENAME:
+        return DiffHint.RENAME;
+      case COPY:
+        return DiffHint.COPY;
+      default:
+        return DiffHint.NONE;
+    }
   }
 }
