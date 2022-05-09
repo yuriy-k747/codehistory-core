@@ -1,24 +1,30 @@
 package dev.codehistory.core.commands;
 
-import dev.codehistory.core.entities.sources.ModuleUnit;
 import dev.codehistory.core.entities.sources.ModuleUnitChange;
 import dev.codehistory.core.entities.sources.ModuleUnitMemberChange;
 import dev.codehistory.core.entities.sources.SourceChange;
 import dev.codehistory.core.index.sources.data.SourceIndexData;
+import dev.codehistory.core.util.external.GitFilesHistoryResult;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class FilesHistoryResult {
   private final SourceIndexData data;
-  private final Map<String, Set<String>> rootPaths;
+  private final Map<String, Set<String>> rootPaths = new HashMap<>();
   private final Map<String, List<ModuleUnitMemberChange>> memberChanges;
   private final Map<String, List<ModuleUnitChange>> unitChanges;
-  private final Map<String, List<ModuleUnit>> snapshot = null;
+  private final GitFilesHistoryResult filesHistoryResult;
   
-  public FilesHistoryResult(SourceIndexData data, Map<String, Set<String>> rootPaths) {
+  public FilesHistoryResult(SourceIndexData data, GitFilesHistoryResult filesHistoryResult) {
     this.data = data;
-    this.rootPaths = rootPaths;
+    this.filesHistoryResult = filesHistoryResult;
+    
+    filesHistoryResult.getFilesHistory().forEach((s, gitFilesHistory) -> {
+        this.rootPaths.computeIfAbsent(s, s1 -> new HashSet<>());
+        this.rootPaths.get(s).addAll(gitFilesHistory.getRenames());
+    });
+    
     this.memberChanges = mapToPath(data.getModuleUnitMemberChanges().values());
     this.unitChanges = mapToPath(data.getModuleUnitChanges().values());
   }

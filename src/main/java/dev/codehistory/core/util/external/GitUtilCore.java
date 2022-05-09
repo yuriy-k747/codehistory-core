@@ -14,7 +14,6 @@ import org.eclipse.jgit.api.LogCommand;
 import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffConfig;
-import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.*;
@@ -42,45 +41,49 @@ public class GitUtilCore {
   public static GitFilesHistoryResult getFilesHistory(FileRepository repository, AnyObjectId id, Collection<String> filePaths) throws IOException {
     DiffConfig diffConfig = repository.getConfig().get(DiffConfig.KEY);
     
-    List<TreeFilter> followFilters = new ArrayList<>(filePaths.size());
+    Map<String, TreeFilter> followFilters = new HashMap<>(filePaths.size());
     List<GitFileHistoryRenameCallback> renameCallbacks = new ArrayList<>();
     for (String filePath : filePaths) {
       FollowFilter followFilter = FollowFilter.create(filePath, diffConfig);
       GitFileHistoryRenameCallback renameCallback = new GitFileHistoryRenameCallback(filePath);
       renameCallbacks.add(renameCallback);
       followFilter.setRenameCallback(renameCallback);
-      followFilters.add(followFilter);
+      followFilters.put(filePath, followFilter);
     }
   
     // Set<RevCommit> revCommits = walkWithOrTreeFilter(repository, id, followFilters); // not working for follow filter combined with or
-    Set<RevCommit> revCommits = walkForEachFiter(repository, id, followFilters);
+    GitFilesHistoryResult res = walkForEachFilter(repository, id, followFilters);
   
-    GitFilesHistoryResult res = new GitFilesHistoryResult(revCommits);
     for (GitFileHistoryRenameCallback renameCallback : renameCallbacks) {
-      res.getFilePathsWithRenames().put(renameCallback.getRootPath(), renameCallback.getRenames());
+      GitFilesHistory history = res.getFilesHistory().get(renameCallback.getRootPath());
+      history.getRenames().add(renameCallback.getRootPath()); // add self
+      history.getRenames().addAll(renameCallback.getRenames());
     }
     
     return res;
   }
   
   // inefficient
-  private static Set<RevCommit> walkForEachFiter(FileRepository repository, AnyObjectId id, List<TreeFilter> filters) throws IOException {
-    Set<RevCommit> revCommits = new HashSet<>();
+  private static GitFilesHistoryResult walkForEachFilter(FileRepository repository, AnyObjectId id, Map<String, TreeFilter> filters) throws IOException {
+    GitFilesHistoryResult res = new GitFilesHistoryResult();
   
-    for (TreeFilter filter : filters) {
+    for (Map.Entry<String, TreeFilter> path : filters.entrySet()) {
       RevWalk revWalk = new RevWalk(repository);
-      revWalk.setTreeFilter(filter);
+      revWalk.setTreeFilter(path.getValue());
   
       RevCommit rootCommit = revWalk.parseCommit(id);
       revWalk.sort(RevSort.COMMIT_TIME_DESC);
       revWalk.markStart(rootCommit);
   
+      GitFilesHistory history = new GitFilesHistory();
       for (RevCommit revCommit : revWalk) {
-        revCommits.add(revCommit);
+        history.getCommits().add(revCommit);
       }
+  
+      res.getFilesHistory().put(path.getKey(), history);
     }
   
-    return revCommits;
+    return res;
   }
   
   // OrTreeFilter.create combined with FollowFilter doesn't work as expected

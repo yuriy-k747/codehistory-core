@@ -1,10 +1,10 @@
 package dev.codehistory.core.commands;
 
-import com.google.common.collect.Lists;
 import dev.codehistory.core.entities.git.Commit;
 import dev.codehistory.core.index.sources.GitChangesCompiler;
 import dev.codehistory.core.index.sources.data.SourceIndexData;
 import dev.codehistory.core.index.sources.data.SourceIndexDataSnapshot;
+import dev.codehistory.core.util.external.GitFilesHistory;
 import dev.codehistory.core.util.external.GitFilesHistoryResult;
 import dev.codehistory.core.util.external.GitUtilCore;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
@@ -15,7 +15,6 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.stream.Collectors;
 
 public class FilesHistoryCommand implements Callable<FilesHistoryResult> {
   private final String repoPath;
@@ -55,29 +54,20 @@ public class FilesHistoryCommand implements Callable<FilesHistoryResult> {
   @Override
   public FilesHistoryResult call() throws Exception {
     GitFilesHistoryResult filesHistory;
-    
     try (FileRepository repository = new FileRepository(repoPath)) {
       filesHistory = GitUtilCore.getFilesHistory(repository, headHash, filesPathFilter);
       Set<RevCommit> branchCommits = GitUtilCore.getCommitsInBranch(repository, branch);
-      filesHistory.getCommits().retainAll(branchCommits);
+      filesHistory.getFilesHistory().forEach((s, gitFilesHistory) -> {
+        gitFilesHistory.getCommits().retainAll(branchCommits);
+      });
     }
     
-    List<Commit> commits = new ArrayList<>(filesHistory.getCommits().size());
-    for (RevCommit revCommit : filesHistory.getCommits()) {
-      commits.add(new Commit(revCommit));
-    }
+    Collection<GitFilesHistory> batches = filesHistory.getFilesHistory().values();
     
-    final int nThreads = 8;
-    final int minSize = 25;
-    int batchSize = commits.size() < minSize ? minSize : commits.size() / nThreads;
-    List<List<Commit>> batches = Lists.partition(commits, batchSize);
-    
-    ExecutorService executor = Executors.newFixedThreadPool(nThreads);
+    ExecutorService executor = Executors.newFixedThreadPool(batches.size());
     final CompletionService<Object> completionService = new ExecutorCompletionService<>(executor);
-  
     SourceIndexData data = new SourceIndexData(new SourceIndexDataSnapshot());
-    GitChangesCompiler compiler = new GitChangesCompiler(repoPath, data, filesHistory.getAllFilePaths());
-    final int tasksCount = tasks(completionService, batches, compiler).size();
+    final int tasksCount = tasks(completionService, batches, data).size();
   
     try {
       for (int i = 0; i < tasksCount; i++) {
@@ -88,14 +78,16 @@ public class FilesHistoryCommand implements Callable<FilesHistoryResult> {
       executor.shutdown();
     }
     
-    return new FilesHistoryResult(data, filesHistory.getFilePathsWithRenames());
+    return new FilesHistoryResult(data, filesHistory);
   }
   
-  private Collection<Future<Object>> tasks(CompletionService<Object> completionService, List<List<Commit>> batches, GitChangesCompiler compiler) {
+  private Collection<Future<Object>> tasks(CompletionService<Object> completionService, Collection<GitFilesHistory> batches, SourceIndexData data) {
     final Collection<Future<Object>> tasks = new ArrayList<>();
-    for (List<Commit> batch : batches) {
+    for (GitFilesHistory batch : batches) {
       tasks.add(completionService.submit(() -> {
-        for (Commit commit : batch) {
+        GitChangesCompiler compiler = new GitChangesCompiler(repoPath, data, batch.getRenames());
+        for (RevCommit revCommit : batch.getCommits()) {
+          Commit commit = new Commit(revCommit);
           compiler.index(commit);
         }
         return true;
