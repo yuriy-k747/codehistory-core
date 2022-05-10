@@ -49,6 +49,7 @@ public class FilesHistoryCommandTests {
     
     FilesHistoryCommand command = new FilesHistoryCommand(repoPath, paths);
     FilesHistoryResult res = command.call();
+    
     Map<String, List<ModuleUnitChange>> unitChanges = res.getUnitChanges();
     Map<String, List<ModuleUnitMemberChange>> memberChanges = res.getMemberChanges();
   }

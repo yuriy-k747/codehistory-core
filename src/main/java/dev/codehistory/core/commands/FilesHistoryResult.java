@@ -14,11 +14,9 @@ public class FilesHistoryResult {
   private final Map<String, Set<String>> rootPaths = new HashMap<>();
   private final Map<String, List<ModuleUnitMemberChange>> memberChanges;
   private final Map<String, List<ModuleUnitChange>> unitChanges;
-  private final GitFilesHistoryResult filesHistoryResult;
   
   public FilesHistoryResult(SourceIndexData data, GitFilesHistoryResult filesHistoryResult) {
     this.data = data;
-    this.filesHistoryResult = filesHistoryResult;
     
     filesHistoryResult.getFilesHistory().forEach((s, gitFilesHistory) -> {
         this.rootPaths.computeIfAbsent(s, s1 -> new HashSet<>());

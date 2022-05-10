@@ -50,10 +50,10 @@ public class ModuleUnitMemberChange extends SourceChange {
     }
 
     SourceState state = getSourceState();
-    return String.format("%s %s %s (start ln: %d col: %d, end ln: %d col: %d)",
+    return String.format("%s%s %s (start ln: %d col: %d, end ln: %d col: %d)",
+        getShortSha1(),
         getChangeType(),
         state.getDefinition(),
-        state.getSha1(),
         state.getStartLine(), state.getStartPos(),
         state.getEndLine(), state.getEndPos());
   }

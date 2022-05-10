@@ -177,13 +177,4 @@ public class ModuleUnitChange extends SourceChange {
   public void setOriginId(Long originId) {
     this.originId = originId;
   }
-  
-  private String getShortSha1() {
-    String sha = "";
-    if(getCommit() != null) {
-      sha = getCommit().getShortSha1() + " ";
-    }
-    
-    return sha;
-  }
 }

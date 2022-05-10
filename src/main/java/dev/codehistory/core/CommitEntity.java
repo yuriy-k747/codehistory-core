@@ -47,4 +47,13 @@ public abstract class CommitEntity extends IdEntity {
     setCommit(commit);
     setCommitParent(commitParent);
   }
+  
+  public String getShortSha1() {
+    String sha = "";
+    if(getCommit() != null) {
+      sha = getCommit().getShortSha1() + " ";
+    }
+    
+    return sha;
+  }
 }
